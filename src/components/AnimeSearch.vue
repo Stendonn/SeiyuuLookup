@@ -1,7 +1,5 @@
 <template>
   <div>
-
-
     <v-container>
 
       <v-autocomplete
@@ -17,6 +15,8 @@
       v-model="model"
       :loading="loading"
       autofocus
+      hide-no-data
+      :snackbar="snackbar"
       >
         <template v-slot:item="data">
           <v-list-item-avatar >
@@ -28,9 +28,25 @@
       </v-autocomplete>
 
     </v-container>
+    <v-snackbar
+       v-model="snackbar"
+     >
+       Please enter more than 3 characters
 
+       <template v-slot:action="{ attrs }">
+         <v-btn
+           color="pink"
+           text
+           v-bind="attrs"
+           @click="snackbar = false"
+         >
+           Close
+         </v-btn>
+       </template>
+     </v-snackbar>
 
   </div>
+
 </template>
 
 <script>
@@ -39,8 +55,6 @@ export default {
   props:{
     cards: Array,
   },
-  components: {
-  },
 
   data: function(){
     return{
@@ -48,6 +62,8 @@ export default {
       entries: [],
       model: null, //holds the mal ID
       loading: false,
+      snackbar: false,
+      error: false,
 
     }
   },
@@ -57,31 +73,40 @@ export default {
   methods:{
 
     searching: function(){
+      this.error = false;
       this.loading = true;
       this.entries = [];
 
+      try{
+        if(this.searchedTitle.length > 2){
 
-      if(this.searchedTitle.length > 2){
+          const jikanjs = require('jikanjs');
 
-        const jikanjs = require('jikanjs');
+          jikanjs.search("anime", this.searchedTitle,1,{limit:20}).then((response) => {
 
-        jikanjs.search("anime", this.searchedTitle,1,{limit:20}).then((response) => {
+            response.results.forEach(anime => {
 
-          response.results.forEach(anime => {
+              this.entries.push(Object.assign({}, {title: anime.title, mal_id: anime.mal_id, image_url: anime.image_url}));
 
-            this.entries.push(Object.assign({}, {title: anime.title, mal_id: anime.mal_id, image_url: anime.image_url}));
+            });
 
+            this.loading = false;
+
+          }).catch((err) => {
+            console.log(err);
           });
-
+        }
+        else{
           this.loading = false;
 
-        }).catch((err) => {
-          console.log(err);
-        });
+        }
       }
-      else{
+      catch(err){
+        this.snackbar = true;
         this.loading = false;
+        console.log(err);
       }
+
     },
     //process the selection
     cardifyChars: function(){

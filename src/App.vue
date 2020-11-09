@@ -16,12 +16,64 @@
       <v-list>
         <v-list-item>
           <v-list-item-icon>
-            <v-icon @click="something">mdi-fish</v-icon>
+            <v-btn icon @click="openGithub">
+              <v-icon>mdi-github</v-icon>
+            </v-btn>
           </v-list-item-icon>
         </v-list-item>
         <v-list-item>
           <v-list-item-icon>
-            <v-icon @click="something">mdi-fish</v-icon>
+
+            <v-dialog
+              v-model="dialog"
+              width="500"
+            >
+              <template v-slot:activator="{ on, attrs }">
+                <v-btn
+                  icon
+                  v-bind="attrs"
+                  v-on="on"
+                >
+                  <v-icon @click="something">mdi-information-outline</v-icon>
+                </v-btn>
+              </template>
+
+              <v-card>
+                <v-card-title class="headline grey lighten-1">
+                   About
+                </v-card-title>
+                <br/>
+                <v-card-text>
+                  This is a simple app (desktop/mobile) that I have created to test my knowledge of
+                  programming while also having a tool to search up Seiyuu (voice actors/actresses)
+                  whenever I occasionally need to. My intended audience for this app is mainly
+                  myself and my friends. I have used Ali60351's Seiyuu Nostalgia and Ervie's
+                  Seiyuu.moe before and they are both great apps that inspired me to make my own
+                  one that can suit my personal needs. Be sure to take a look at their great apps.
+                  I am a fairly new programmer, especially when it comes to more of the front-end stuff,
+                  so there may be some bugs so you can contact me if you would like to.
+                </v-card-text>
+
+                <v-card-text>
+                  Here are some planned features: <br/>
+                  --Anilist user filter<br/>
+                  --Seiyuu search<br/>
+                  --Color scheme<br/>
+                  --Results cards clickable<br/>
+                  --Better error handling<br/>
+                  --Improve design for inputting username<br/>
+                  --Optimization<br/>
+                  --Anilist pictures (maybe)<br/>
+                  --Ultimately want expand to anime and games but no API for games<br/>
+                </v-card-text>
+
+                <v-card-text>
+                  Contact me:<br/>
+                  stendon12@gmail.com
+                </v-card-text>
+
+              </v-card>
+ </v-dialog>
           </v-list-item-icon>
         </v-list-item>
       </v-list>
@@ -63,8 +115,8 @@
           </v-stepper-content>
 
           <v-stepper-content step="3">
-            <varoles  :selectedVA="selectedVA" @stepup="stepup" @fillResults="fillResults" @allAnimeMALID="fillUserAnime" ></varoles>
 
+            <varoles  :selectedVA="selectedVA" @stepup="stepup" @fillResults="fillResults" @allAnimeMALID="fillUserAnime" ></varoles>
 
           </v-stepper-content>
 
@@ -92,7 +144,9 @@
 import AnimeSearch from "@/components/AnimeSearch.vue"
 import ListChars from "@/components/ListChars.vue"
 import VARoles from "@/components/VARoles.vue"
+
 import Results from "@/components/Results.vue"
+
 
 export default {
   name: 'App',
@@ -107,7 +161,6 @@ export default {
     return{
       drawer: false,
       cards: [],
-      roleCards: [],
       e1: 1,
       step: 1,
       selectedVA:{
@@ -115,9 +168,14 @@ export default {
         va_name: null,
         va_image_url: null,
         va_roles: [],
+        about: "",
+        family_name: "",
+        given_name: "",
+        website_url: "",
       },
       allUserAnime: [],
       results: [],
+      dialog: false,
 
     }
   },
@@ -133,11 +191,19 @@ export default {
     stepup: function(step){
       this.e1 = step;
     },
-    vaFill: function(va_id, va_name, va_image_url, va_roles){
+    vaFill: function(va_id, va_name, va_image_url, va_roles, va_about, va_family_name, va_given_name, va_website_url){
       this.selectedVA.va_id = va_id;
       this.selectedVA.va_name = va_name;
       this.selectedVA.va_image_url = va_image_url;
       this.selectedVA.va_roles = va_roles;
+
+      this.selectedVA.about = va_about;
+      this.selectedVA.family_name = va_family_name;
+      this.selectedVA.given_name = va_given_name;
+      this.selectedVA.website_url = va_website_url;
+      var temp = String(this.selectedVA.about).replace(/\\n/g, "<br/>");
+
+      this.selectedVA.about = temp;
 
     },
     fillUserAnime: function(allAnimeMALID){
@@ -148,6 +214,9 @@ export default {
 
       this.results = results;
     },
+    openGithub: function(){
+      window.open("https://github.com/Stendonn/SeiyuuLookup", "_blank");
+    },
 
 
   },
@@ -155,7 +224,5 @@ export default {
 };
 </script>
 <style>
-.btn-toggle {
-  flex-direction:column;
-}
+
 </style>
