@@ -1,24 +1,7 @@
-# VALookup
+# SeiyuuLookup
 
-## Project setup
-```
-npm install
-```
+Check out the information in the website navigation bar for more info.
 
-### Compiles and hot-reloads for development
-```
-npm run serve
-```
-
-### Compiles and minifies for production
-```
-npm run build
-```
-
-### Lints and fixes files
-```
-npm run lint
-```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+Tools used:
+-Jikan - Unofficial MyAnimeList.net PHP API
+-JikanJS by Zuritor
