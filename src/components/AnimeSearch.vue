@@ -1,142 +1,149 @@
 <template>
   <div>
     <v-container>
-
       <v-autocomplete
       prepend-icon="mdi-magnify"
-      label="Search and select"
+      label="Search and select an ANIME e.g. Shingeki no Kyojin"
       :items="entries"
       item-text="title"
       :search-input.sync="searchedTitle"
       item-value="mal_id"
       no-filter
-      @keyup="searching"
+      :loading="loading"
       @input="cardifyChars"
       v-model="model"
-      :loading="loading"
       autofocus
-      hide-no-data
-      :snackbar="snackbar"
+      :hide-no-data="hideData"
+      no-data-text="No results found"
+      color="pink"
       >
         <template v-slot:item="data">
           <v-list-item-avatar >
             <v-img :src="data.item.image_url"></v-img>
           </v-list-item-avatar>
           <v-list-item-title>{{ data.item.title }}</v-list-item-title>
+          <v-list-item-subtitle>{{data.item.type}} | {{ data.item.year}}</v-list-item-subtitle>
         </template>
-
       </v-autocomplete>
 
     </v-container>
+
     <v-snackbar
-       v-model="snackbar"
-     >
-       Please enter more than 3 characters
+      class="custom-width"
+      v-model="loadingAnimeSearch"
 
-       <template v-slot:action="{ attrs }">
-         <v-btn
-           color="pink"
-           text
-           v-bind="attrs"
-           @click="snackbar = false"
-         >
-           Close
-         </v-btn>
-       </template>
-     </v-snackbar>
+      timeout="-1"
 
+    >
+      <span>Fetching the anime...</span>
+      <template v-slot:action="{ attrs }">
+        <v-progress-circular v-bind="attrs" size=28  color="pink" indeterminate />
+      </template>
+
+    </v-snackbar>
+    <v-snackbar v-model="error" color="error" timeout=3000>
+      {{errorMessage}}
+      <template v-slot:action="{ attrs }">
+        <v-btn
+          text
+          v-bind="attrs"
+          @click="setLoadingAnimeError"
+        >
+          Close
+        </v-btn>
+      </template>
+    </v-snackbar>
   </div>
 
+
+
 </template>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
 <script>
 
+
 export default {
   props:{
-    cards: Array,
+    loadingAnimeSearch: Boolean,
+    loadingAnimeError: Boolean
   },
 
   data: function(){
     return{
+      test: true,
       searchedTitle: "",
       entries: [],
       model: null, //holds the mal ID
-      loading: false,
-      snackbar: false,
       error: false,
-
+      timeout: null,
+      hideData: true,
+      loading: false,
+      errorMessage: "There was a problem. Please try again."
     }
   },
   computed:{
 
   },
   methods:{
-
-    searching: function(){
-      this.error = false;
-      this.loading = true;
-      this.entries = [];
-
-      try{
-        if(this.searchedTitle.length > 2){
-
-          const jikanjs = require('jikanjs');
-
-          jikanjs.search("anime", this.searchedTitle,1,{limit:20}).then((response) => {
-
-            response.results.forEach(anime => {
-
-              this.entries.push(Object.assign({}, {title: anime.title, mal_id: anime.mal_id, image_url: anime.image_url}));
-
-            });
-
-            this.loading = false;
-
-          }).catch((err) => {
-            console.log(err);
-          });
-        }
-        else{
-          this.loading = false;
-
-        }
-      }
-      catch(err){
-        this.snackbar = true;
-        this.loading = false;
-        console.log(err);
-      }
-
+    setLoadingAnimeError(){
+      this.$emit("loadingAnimeError", false)
     },
     //process the selection
     cardifyChars: function(){
-
-      this.$emit('resetCards');
-
-      const jikanjs = require('jikanjs');
-
-      jikanjs.loadAnime(this.model, "characters_staff").then((response) => {
-        response.characters.forEach(char => {
-          char.voice_actors.forEach(va => {
-
-            if(va.language == 'Japanese'){
-
-              this.cards.push(Object.assign({}, {name: char.name, image_url: char.image_url, role: char.role, va_id: va.mal_id, voice_actor: va.name, va_image_url: va.image_url}));
-            }
-          })
-
-        });
-
-        this.$emit('stepup', 2);
-      })
-
+      this.$emit('cardifyChars', this.model, "step1")
     }
 
   },
+  watch: {
+    searchedTitle(title) {
+      this.hideData = true
+      this.error = false;
+
+      this.entries = [];
+      this.timeout = clearTimeout(this.timeout)
+      const self = this
+      if(title != null){
+          if(title.length > 2){
+            this.loading = true
+            this.timeout = setTimeout(function() {
+              const axios = require('axios')
+              const url = 'https://api.jikan.moe/v4/anime?q=' + title
+              axios.get(url)
+              .then((response)=>{
+                response.data.data.forEach(anime => {
+                  const entry = {title: anime.title, mal_id: anime.mal_id, image_url: anime.images.jpg.image_url, year: anime.year, type: anime.type}
+                  self.entries.push(entry)
+
+                });
+              })
+              .catch((error)=>{
+              })
+              .finally(()=>{
+                self.hideData = false
+                self.loading = false
+              })
+            }, 800)
+          }
+      }
+
+
+    },
+    loadingAnimeError: function(){
+      this.error = this.loadingAnimeError
+    },
+    error: function(){
+      if(this.error == false){
+        this.setLoadingAnimeError()
+      }
+    }
+  }
 
 };
 </script>
 
 <style>
-
+.custom-width .v-snack__wrapper{
+  min-width: 250px
+}
 </style>

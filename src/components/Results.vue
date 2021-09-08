@@ -25,12 +25,21 @@
                 </v-card-title>
 
                 <v-card-text class="pt-4">Given name:
-                  {{this.selectedVA.given_name}} <br/>
-                  Family name: {{this.selectedVA.family_name}}</v-card-text>
+                  {{this.selectedVA.va_given_name}} <br/>
+                  Family name: {{this.selectedVA.va_family_name}}<br/>
+                  Birthday: {{this.selectedVA.va_birthday}}
+                </v-card-text>
 
-                <v-card-text v-html="this.selectedVA.about"></v-card-text>
+                <v-card-text class="pre-formatted" v-html="this.selectedVA.va_about"></v-card-text>
 
-                <v-card-text>Webpage: {{this.selectedVA.website_url}}</v-card-text>
+                <v-card-text>
+                  Webpage:
+                  <a target="_blank" :href="this.selectedVA.va_website_url">
+                    {{this.selectedVA.va_website_url}}
+                  </a>
+
+
+                </v-card-text>
 
               </v-card>
 
@@ -42,8 +51,8 @@
     </v-row>
     <v-row>
       <v-col v-for="(char, index) in results" :key="index" sm=4 md=3 lg=2 cols=6>
-        <v-card>
-          <v-img  :src="char.char_image_url" >
+        <v-card >
+          <v-img  :class="char.role == 'Main' ? 'mainChar' : 'sideChar'" :src="char.char_image_url" >
             <template v-slot:placeholder>
 
                 <v-row class="fill-height" align="center" justify="center">
@@ -80,5 +89,13 @@ export default {
 </script>
 
 <style>
-
+  .mainChar{
+    border: 2px solid green
+  }
+  .sideChar{
+    border: 2px solid gray
+  }
+  .pre-formatted{
+    white-space: pre-wrap
+  }
 </style>
