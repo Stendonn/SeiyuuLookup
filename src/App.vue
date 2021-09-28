@@ -278,9 +278,15 @@ export default {
 
       if(this.radioGroup == 'anime'){
         if(this.e1 == 2){
+          this.allUserAnime = []
+          this.results = []
+          this.selectedVA = []
+
           this.showStep1 = true
         }
         else if(this.e1 == 3){
+          this.results = []
+          this.allUserAnime = []
           this.showStep1 = true
           this.showStep2 = true
         }
@@ -315,45 +321,165 @@ export default {
         this.loadingAnimeSearchS3 = true
         this.loadingAnimeErrorS3 = false
       }
-
+      var pageNum = 1
       const axios = require('axios')
-
-      var url = 'https://api.jikan.moe/v3/anime/' + id + "/characters_staff"
-      axios.get(url)
+      var data = JSON.stringify({
+        query: `
+          query ($id: Int, $page: Int){
+            Media(id: $id){
+              id
+              coverImage {
+                extraLarge
+              }
+              characters(page: $page, sort: ROLE) {
+                edges {
+                  node {
+                    id
+                    name {
+                      full
+                    }
+                    image {
+                      large
+                    }
+                  }
+                  role
+                  voiceActorRoles(language: JAPANESE){
+                    voiceActor {
+                      id
+                      name{
+                        full
+                      }
+                      image{
+                        large
+                      }
+                    }
+                    roleNotes
+                  }
+                }
+                pageInfo{
+                  lastPage
+                }
+              }
+            }
+          }`,
+        variables: {
+          id: id,
+          page: pageNum
+        }
+      })
+      var config = {
+        method: 'post',
+        url: 'https://graphql.anilist.co',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        data : data
+      }
+      axios(config)
       .then((response)=>{
-        response.data.characters.forEach(char => {
-          char.voice_actors.forEach(va => {
 
-            if(va.language == 'Japanese'){
-              this.cards.push(Object.assign({}, {
-                name: char.name,
-                image_url: char.image_url,
-                role: char.role,
-                va_id: va.mal_id,
-                voice_actor: va.name,
-                va_image_url:
-                va.image_url}));
+        response.data.data.Media.characters.edges.forEach(char=>{
+          char.voiceActorRoles.forEach(va=>{
+            this.cards.push(Object.assign({}, {
+              name: char.node.name.full,
+              image_url: char.node.image.large,
+              role: char.role,
+              va_id: va.voiceActor.id,
+              voice_actor: va.voiceActor.name.full,
+              va_image_url: va.voiceActor.image.large, //dont need
+              va_roleNotes: va.roleNotes
+            }));
+          })
+        })
+        while(pageNum <= response.data.data.Media.characters.pageInfo.lastPage){
+          pageNum++
+          data = JSON.stringify({
+            query: `
+              query ($id: Int, $page: Int){
+                Media(id: $id){
+                  id
+                  coverImage {
+                    extraLarge
+                  }
+                  characters(page: $page, sort: ROLE) {
+                    edges {
+                      node {
+                        id
+                        name {
+                          full
+                        }
+                        image {
+                          large
+                        }
+                      }
+                      role
+                      voiceActorRoles(language: JAPANESE){
+                        voiceActor {
+                          id
+                          name{
+                            full
+                          }
+                          image{
+                            large
+                          }
+                        }
+                        roleNotes
+                      }
+                    }
+                    pageInfo{
+                      lastPage
+                    }
+                  }
+                }
+              }`,
+            variables: {
+              id: id,
+              page: pageNum
             }
           })
-
-        });
-
-        setTimeout(()=>{
-          if(step == 'step1'){
-            this.loadingAnimeSearch = false
-
+          config = {
+            method: 'post',
+            url: 'https://graphql.anilist.co',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            data : data
           }
-          else if(step == 'step3'){
-            this.loadingAnimeSearchS3 = false
-          }
-          this.stepup(2)
-          this.$vuetify.goTo(0)
-          this.selectedVA = {}
-        }, 1000)
+          axios(config)
+          .then((response)=>{
+            response.data.data.Media.characters.edges.forEach(char=>{
+              char.voiceActorRoles.forEach(va=>{
+                this.cards.push(Object.assign({}, {
+                  name: char.node.name.full,
+                  image_url: char.node.image.large,
+                  role: char.role,
+                  va_id: va.voiceActor.id,
+                  voice_actor: va.voiceActor.name.full,
+                  va_image_url: va.voiceActor.image.large, //dont need
+                  va_roleNotes: va.roleNotes
+                }));
+              })
+            })
+          })
+
+        }
 
 
+        // setTimeout(()=>{
+        if(step == 'step1'){
+          this.loadingAnimeSearch = false
+
+        }
+        else if(step == 'step3'){
+          this.loadingAnimeSearchS3 = false
+        }
+        this.stepup(2)
+        this.$vuetify.goTo(0)
+        this.selectedVA = {}
+        // }, 1000)
       })
-      .catch(()=>{
+      .catch((error)=>{
+        console.log(error)
         if(step == 'step1'){
           this.loadingAnimeError = true
           this.loadingAnimeSearch = false
@@ -364,46 +490,183 @@ export default {
           this.loadingAnimeSearchS3 = false
         }
       })
+      .finally(()=>{
+
+      })
     },
     selectVA: function(vaID){
-      if(this.loadingVASearch == false){
-        this.loadingVASearch = true;
 
+      if(this.loadingVASearch == false){
+        this.loadingVASearch = true
         const axios = require('axios')
         axios.defaults.timeout = 8000
-        const aboutURL = 'https://api.jikan.moe/v3/person/' + vaID
-        axios.get(aboutURL)
+        var data = JSON.stringify({
+          query: `
+            query ($id: Int){
+            	Staff(id: $id){
+                name {
+                  full
+                  native
+                }
+                image {
+                  large
+                  medium
+                }
+                dateOfBirth {
+                  year
+                  month
+                  day
+                }
+                age
+                homeTown
+                description
+                gender
+                bloodType
+                characters(page: 1) {
+                  edges {
+                    role
+                    node{
+                      name {
+                        full
+                      }
+                      image{
+                        large
+                      }
+                    }
+                    media {
+                      id
+                      idMal
+                      title {
+                        romaji
+                      }
+                      coverImage{
+                        large
+                      }
+                    }
+                  }
+                  pageInfo {
+                    lastPage
+                  }
+                }
+              }
+            }`,
+          variables: {
+            id: vaID
+          }
+        })
+        var config = {
+          method: 'post',
+          url: 'https://graphql.anilist.co',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          data : data
+        }
+        var pageNum = 1
+        axios(config)
         .then((response)=>{
-          const { about, birthday, family_name,
-                  given_name, image_url, mal_id,
-                  name, website_url, voice_acting_roles
-                } = response.data
 
-          const dateBirthday = new Date(birthday)
+          const staff = response.data.data.Staff
+
+          const native_name = staff.name.native
+          const name = staff.name.full
+          const about = staff.description
+          const dob = staff.dateOfBirth
+          const birthday = new Date(dob.year, dob.month, dob.day)
           const formattedBirthday = Intl.DateTimeFormat('en-US',{month: 'long'})
-                                    .format(dateBirthday) + " " + dateBirthday
-                                    .getDate()
+                                    .format(birthday) + " " + birthday
+                                    .getDate() + birthday.getFullYear()
+          const age = staff.age
+          const gender = staff.gender
+          const bloodType = staff.bloodType
+          const image_url = staff.image.large
+          const id = vaID
+          const hometown = staff.homeTown
+
+
+          var voice_acting_roles = staff.characters.edges
 
           const seiyuuProfile = {
-            va_id: mal_id,
+            va_id: id,
             va_name: name,
             va_image_url: image_url,
             va_roles: voice_acting_roles,
             va_about: about,
-            va_family_name: family_name,
-            va_given_name: given_name,
-            va_website_url: website_url,
-            va_birthday: formattedBirthday
+            va_native_name: native_name,
+            va_birthday: formattedBirthday,
+            va_age: age,
+            va_gender: gender,
+            va_hometown: hometown,
+            va_bloodtype: bloodType
+          }
+
+          while(pageNum < staff.characters.pageInfo.lastPage){
+            pageNum++
+            var data = JSON.stringify({
+              query: `
+                query ($id: Int, $page: Int){
+                  Staff(id: $id){
+                    characters(page: $page) {
+                      edges {
+                        node{
+                          name {
+                            full
+                          }
+                          image{
+                            large
+                          }
+                        }
+                        media {
+                          id
+                          idMal
+                          title {
+                            romaji
+                          }
+                          coverImage{
+                            large
+                          }
+                        }
+                      }
+                      pageInfo {
+                        lastPage
+                      }
+                    }
+                  }
+                }`,
+              variables: {
+                id: vaID,
+                page: pageNum
+              }
+            })
+            var config = {
+              method: 'post',
+              url: 'https://graphql.anilist.co',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              data : data
+            }
+            axios(config)
+            .then((response)=>{
+              var additionalEdges = seiyuuProfile.va_roles.concat(response.data.data.Staff.characters.edges)
+              seiyuuProfile.va_roles = additionalEdges
+
+            })
+
           }
           this.selectedVA = seiyuuProfile
-
-          this.loadingVASearch = false
-          this.stepup(3)
-
         })
-        .catch(()=>{
+        .catch((error)=>{
+          console.log(error)
           this.loadingVASearch = false
           this.loadingVAError = true
+        })
+        .finally(()=>{
+          setTimeout(()=>{
+            this.loadingVASearch = false
+            this.stepup(3)
+          }, 800)
+
         })
       }
 

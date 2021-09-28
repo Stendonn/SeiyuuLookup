@@ -12,36 +12,44 @@
     >
       <v-icon>mdi-chevron-up</v-icon>
     </v-btn>
-
-    <usernameentry @processResults="processResults($event)" :selectedVA="selectedVA"/>
+    <v-lazy transition="fade-transition">
+      <usernameentry @processResults="processResults($event)" :selectedVA="selectedVA"/>
+    </v-lazy>
     <br/>
 
     <v-row>
       <v-col xs=12 sm=12 md=6 lg=4 v-for="(role, index) in selectedVA.va_roles" :key="index">
         <v-lazy transition="fade-transition">
+
           <v-card>
-              <v-list-item :class="role.role === 'Main' ? 'mainChar' : 'sideChar'">
+              <v-list-item :class="role.role === 'MAIN' ? 'mainChar' : 'sideChar'">
 
                 <v-list-item-avatar size="125"  rounded>
-                  <v-img  :src="role.anime.image_url"></v-img>
+                  <v-img  :src="role.media[0].coverImage.large">
+                    <template v-slot:placeholder>
+                      <v-row class="fill-height" align="center" justify="center">
+                        <v-progress-circular size=50 color="pink" indeterminate />
+                      </v-row>
+                    </template>
+                  </v-img>
                 </v-list-item-avatar>
 
                 <v-list-item-content>
-                  <v-list-item-title @click="animeSelect(role.anime.mal_id)" class="animename">
+                  <v-list-item-title @click="animeSelect(role.media[0].id)" class="animename">
                     <v-tooltip  top>
                       <template v-slot:activator="{ on, attrs }">
                         <span v-bind="attrs" v-on="on">
-                          {{ role.anime.name }}
+                          {{ role.media[0].title.romaji }}
                         </span>
                       </template>
                       <span>
-                        {{ role.anime.name }}
+                        {{role.media[0].title.romaji }}
                       </span>
                     </v-tooltip>
                   </v-list-item-title>
 
                   <v-list-item-title class="charname">
-                    {{ role.character.name }}
+                    {{ role.node.name.full }}
                   </v-list-item-title>
                 </v-list-item-content>
 
@@ -50,13 +58,18 @@
                 size="125"
                 rounded
                 >
-                  <v-img  :src="role.character.image_url"></v-img>
+                  <v-img :src="role.node.image.large">
+                    <template v-slot:placeholder>
+                      <v-row class="fill-height" align="center" justify="center">
+                        <v-progress-circular size=50 color="pink" indeterminate />
+                      </v-row>
+                    </template>
+                  </v-img>
                 </v-list-item-avatar>
               </v-list-item>
           </v-card>
         </v-lazy>
       </v-col>
-
 
 
     </v-row>
@@ -121,12 +134,12 @@ export default {
       this.selectedVA.va_roles.forEach(role => {
         var i = 0;
         for(i = 0; i < this.allUserAnime.length; i++){
-          if(role.anime.mal_id == this.allUserAnime[i]){
+          if(role.media[0].idMal == this.allUserAnime[i]){
             this.results.push(Object.assign({},
               {
-                anime_title: role.anime.name,
-                char_image_url: role.character.image_url,
-                char_name: role.character.name,
+                anime_title: role.media[0].title.romaji,
+                char_image_url: role.node.image.large,
+                char_name: role.node.name.full,
                 role: role.role
               }));
             break;
@@ -175,7 +188,7 @@ export default {
     color:gray;
   }
   .mainChar{
-    border: 1px solid green
+    border: 1px solid #ec407a;
   }
   .sideChar{
     border: 1px solid gray

@@ -11,8 +11,11 @@
     "axios": "^0.20.0",
     "core-js": "^3.6.5",
     "jikanjs": "^0.7.0",
+    "linkify-html": "^3.0.2",
+    "linkifyjs": "^3.0.1",
     "pkce-challenge": "^2.2.0",
     "vue": "^2.6.11",
+    "vue-linkify": "^1.0.1",
     "vue-router": "^3.2.0",
     "vuetify": "^2.2.11"
   },

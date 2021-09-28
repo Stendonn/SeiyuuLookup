@@ -8,7 +8,7 @@
       :items="entries"
       item-text="name"
       :search-input.sync="searchedSeiyuu"
-      item-value="mal_id"
+      item-value="id"
       no-filter
       @input="allRoles"
       v-model="model"
@@ -91,40 +91,73 @@ export default {
     searchedSeiyuu(name){
       this.hideData = true
       this.error = false;
+
       this.entries = [];
+
+      const axios = require('axios')
+
+      var data = JSON.stringify({
+        query: `
+          query ($search: String){
+            Page(perPage: 10){
+              staff(search: $search){
+                id
+                image{
+                  large
+                }
+                name{
+                  full
+                }
+              }
+            }
+          }`,
+        variables: {
+          search: name
+        }
+      })
+      var config = {
+        method: 'post',
+        url: 'https://graphql.anilist.co',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        data : data
+      }
       this.timeout = clearTimeout(this.timeout)
       const self = this
-      this.timeout = setTimeout(function() {
-        if(name != null){
-          if(name.length > 2){
-            const axios = require('axios')
-            self.loading = true;
+      if(name != null){
+        if(name.length > 2){
+          this.loading = true
+          this.timeout = setTimeout(function() {
 
-            const url = 'https://api.jikan.moe/v4/people?q=' + name + '&limit=10'
-            axios.get(url)
+            axios(config)
             .then((response)=>{
 
-              response.data.data.forEach(person => {
+              response.data.data.Page.staff.forEach(staff => {
+                const entry = {
+                  name: staff.name.full,
+                  id: staff.id,
+                  image_url: staff.image.large,
+                }
+                self.entries.push(entry)
+              })
 
-                self.entries.push(Object.assign({}, {name: person.name, mal_id: person.mal_id, image_url: person.images.jpg.image_url}));
-
-              });
             })
-            .catch(()=>{
-              this.errorMessage = "There was a problem. Please try again."
-              this.error = true
+            .catch((error)=>{
+              console.log(error)
+
             })
             .finally(()=>{
-              self.loading = false
               self.hideData = false
+              self.loading = false
             })
-          }
-          else{
-            self.loading = false;
 
-          }
+          }, 800)
         }
-      }, 800)
+        else{
+          this.loading = false
+        }
+      }
     },
     loadingVAError: function(){
       this.error = this.loadingVAError

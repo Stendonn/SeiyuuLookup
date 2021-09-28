@@ -13,7 +13,7 @@
 
               >
                 <v-img
-                  :class="char.role === 'Main' ? 'mainChar' : 'sideChar'"
+                  :class="char.role === 'MAIN' ? 'mainChar' : 'sideChar'"
                   aspect-ratio="0.6"
                   :src="char.image_url"
                 >
@@ -26,7 +26,12 @@
                 </v-img>
 
                 <v-card-text class="text-h6 pb-0 white--text ">{{char.name}}</v-card-text>
-                <v-card-text class="text-body-2 pt-0 grey--text">{{char.voice_actor}}</v-card-text>
+                <v-card-text class="text-body-2 pt-0 grey--text">
+                  {{char.voice_actor}}
+                  <span v-if="char.va_roleNotes != null">
+                    ({{char.va_roleNotes}})
+                  </span>
+                </v-card-text>
 
               </v-card>
             </v-hover>

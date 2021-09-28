@@ -7,7 +7,7 @@
       :items="entries"
       item-text="title"
       :search-input.sync="searchedTitle"
-      item-value="mal_id"
+      item-value="al_id"
       no-filter
       :loading="loading"
       @input="cardifyChars"
@@ -101,33 +101,75 @@ export default {
       this.error = false;
 
       this.entries = [];
+
+      const axios = require('axios')
+
+      var data = JSON.stringify({
+        query: `
+          query ($search: String){
+            Page(perPage: 25){
+              media(search: $search, type: ANIME){
+                title {
+                  romaji
+                }
+                id
+                format
+                seasonYear
+                coverImage {
+                  extraLarge
+                }
+              }
+            }
+          }`,
+        variables: {
+          search: title
+        }
+      })
+      var config = {
+        method: 'post',
+        url: 'https://graphql.anilist.co',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        data : data
+      }
       this.timeout = clearTimeout(this.timeout)
       const self = this
       if(title != null){
-          if(title.length > 2){
-            this.loading = true
-            this.timeout = setTimeout(function() {
-              const axios = require('axios')
-              const url = 'https://api.jikan.moe/v4/anime?q=' + title
-              axios.get(url)
-              .then((response)=>{
-                response.data.data.forEach(anime => {
-                  const entry = {title: anime.title, mal_id: anime.mal_id, image_url: anime.images.jpg.image_url, year: anime.year, type: anime.type}
-                  self.entries.push(entry)
+        if(title.length > 2){
+          this.loading = true
+          this.timeout = setTimeout(function() {
 
-                });
+            axios(config)
+            .then((response)=>{
+
+              response.data.data.Page.media.forEach(anime => {
+                const entry = {
+                  title: anime.title.romaji,
+                  al_id: anime.id,
+                  image_url: anime.coverImage.extraLarge,
+                  year: anime.seasonYear,
+                  type: anime.format
+                }
+                self.entries.push(entry)
               })
-              .catch((error)=>{
-              })
-              .finally(()=>{
-                self.hideData = false
-                self.loading = false
-              })
-            }, 800)
-          }
+
+            })
+            .catch((error)=>{
+              console.log(error)
+
+            })
+            .finally(()=>{
+              self.hideData = false
+              self.loading = false
+            })
+
+          }, 800)
+        }
+        else{
+          this.loading = false
+        }
       }
-
-
     },
     loadingAnimeError: function(){
       this.error = this.loadingAnimeError

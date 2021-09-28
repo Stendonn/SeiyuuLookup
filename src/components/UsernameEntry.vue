@@ -3,80 +3,66 @@
     <v-container>
       <v-row align="center" justify="center">
         <v-col>
-          <v-card  max-width=245 >
-            <v-img :src="this.selectedVA.va_image_url"></v-img>
-            <v-card-actions>
-              <v-card-text  class="font-weight-medium  text-body-1 pl-2 ">{{ this.selectedVA.va_name }}</v-card-text>
-              <v-dialog
-                v-model="dialog"
-                width="500"
-              >
-                <template v-slot:activator="{ on, attrs }">
-                  <v-btn icon right v-on="on" v-bind="attrs">
-                    <v-icon>mdi-information-outline</v-icon>
-                  </v-btn>
+          <v-lazy transition="fade-transition">
+            <v-card  max-width=245 >
+
+              <v-img :src="this.selectedVA.va_image_url">
+                <template v-slot:placeholder>
+                  <v-row class="fill-height" align="center" justify="center">
+                    <v-progress-circular size=150 color="pink" indeterminate />
+                  </v-row>
                 </template>
+              </v-img>
 
-                <v-card>
 
-                  <v-card-title class="headline grey lighten-1">
-                    {{this.selectedVA.va_name}}
-                  </v-card-title>
+              <v-card-title class="font-weight-medium px-2 py-2 pa-3 justify-center">
+                <span>{{ this.selectedVA.va_name }}</span>
 
-                  <v-card-text class="pt-4">Given name:
-                    {{this.selectedVA.va_given_name}} <br/>
-                    Family name: {{this.selectedVA.va_family_name}}<br/>
-                    Birthday: {{this.selectedVA.va_birthday}}
-                  </v-card-text>
+              </v-card-title>
+              <v-card-subtitle class="px-2 py-2 pa-1 text-center">
+                <span>{{ this.selectedVA.va_native_name}}</span>
+              </v-card-subtitle>
 
-                  <v-card-text class="pre-formatted" v-html="this.selectedVA.va_about"></v-card-text>
-                  <v-card-text>
-                    Webpage:
-                    <a target="_blank" :href="this.selectedVA.va_website_url">{{this.selectedVA.va_website_url}}</a>
-
-                  </v-card-text>
-
-                </v-card>
-
-              </v-dialog>
-            </v-card-actions>
-          </v-card>
+            </v-card>
+          </v-lazy>
         </v-col>
         <v-col>
           <v-form @submit.prevent>
 
-              <v-radio-group
-                v-model="platform"
-                row
-                class="justify-center"
-                mandatory
-                dark
-              >
-                <v-radio value="mal" color="#01579B">
-                  <template v-slot:label>
-                    <div><strong class="light-blue--text text--darken-4">MyAnimeList</strong></div>
-                  </template>
-                </v-radio>
-                <v-radio value="anilist" color="#29B6F6">
-                  <template v-slot:label>
-                    <div>
-                      <strong class="white--text">ANI</strong>
-                      <strong class="light-blue--text text--lighten-1">LIST</strong>
-                    </div>
-                  </template>
-                </v-radio>
-              </v-radio-group>
+            <v-radio-group
+              v-model="platform"
+              row
+              class="justify-center"
+              mandatory
+              dark
+            >
+              <v-radio value="mal" color="#01579B">
+                <template v-slot:label>
+                  <div><strong class="light-blue--text text--darken-4">MyAnimeList</strong></div>
+                </template>
+              </v-radio>
+              <v-radio value="anilist" color="#29B6F6">
+                <template v-slot:label>
+                  <div>
+                    <strong class="white--text">ANI</strong>
+                    <strong class="light-blue--text text--lighten-1">LIST</strong>
+                  </div>
+                </template>
+              </v-radio>
+            </v-radio-group>
+
             <v-text-field
-            append-icon="mdi-send"
-            @click:append="platform == 'mal' ? getMALList() : getALList()"
-            @keydown.enter="platform == 'mal' ? getMALList() : getALList()"
-            :label="platform == 'mal' ? malLabel : anilistLabel"
-            v-model="username"
-            outlined
-            dark
-            :color="platform == 'mal' ? '#01579B' : '#29B6F6'"
+              append-icon="mdi-send"
+              @click:append="platform == 'mal' ? getMALList() : getALList()"
+              @keydown.enter="platform == 'mal' ? getMALList() : getALList()"
+              :label="platform == 'mal' ? malLabel : anilistLabel"
+              v-model="username"
+              outlined
+              dark
+              :color="platform == 'mal' ? '#01579B' : '#29B6F6'"
             >
             </v-text-field>
+
           </v-form>
         </v-col>
       </v-row>
@@ -109,6 +95,7 @@
     </v-snackbar>
   </div>
 </template>
+
 
 <script>
 
